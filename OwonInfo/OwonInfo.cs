@@ -1,5 +1,6 @@
 using System.Data;
 using System.IO.Ports;
+using System.Runtime.ExceptionServices;
 using System.Threading.Channels;
 
 namespace OwonInfo
@@ -92,31 +93,51 @@ namespace OwonInfo
         }
 
         /// <summary>
-        /// Formats the value returned by the OWON firmware.  The values returned are inconsistent 
-        /// sometimes they include a space before the unit but not always.  
+        /// Formats the value returned by the OWON firmware.  
+        /// The values returned are inconsistent sometimes they include a space before 
+        /// the unit like 12.3 VDC but not always like 20.1VDC.
+        /// Also sometimes it has a leading 0 like 029.00 this gets removed.
         /// Therefore this method will check for that and format the value accordingly.
         /// </summary>
         /// <param name="s">The value string to format.</param>
         /// <returns>Formatted value string.</returns>
-        static string FormatValue(string s)
+        public static string FormatValue(string? s)
         {
             string fs = string.Empty;
             string delim = " ";
+            bool isLeadingDigit = true;
 
-            if (s.Contains(' '))
-                return s;
-
-            if (s == null)
+            if (string.IsNullOrEmpty(s))
                 return string.Empty;
-            foreach (char c in s)
+
+            // Check for leading 0 and for space before unit
+            bool hasDelim = s.Contains(' ');
+            char c, nextc;
+            int scanLen = s.Length-1;
+            int lastChar = scanLen-1;
+
+            for (int i = 0; i < scanLen; i++)
             {
-                if (c <= '9' || c == '.')
-                    fs += c;
-                else
+                c = s[i]; nextc = s[i+1]; 
+                if (!( isLeadingDigit && c == '0' && char.IsDigit(nextc) ))
                 {
-                    fs += delim + c;
-                    delim = string.Empty;
+                    if (c != '-' && (c > '0' || c == '.'))
+                        isLeadingDigit = false;
+
+                    // Check for numeric digit or decimal place
+                    if (char.IsDigit(c) || c == '.' || c == '-')
+                        fs += c;
+                    else // Make sure the unit has a space before it as a delimiter
+                    {
+                        if (hasDelim)
+                            fs += c;
+                        else
+                            fs += delim + c;
+                        delim = string.Empty;
+                    }
                 }
+                if (i >= lastChar)
+                    fs += delim + nextc;
             }
             return fs;
         }

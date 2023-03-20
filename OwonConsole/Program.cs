@@ -16,7 +16,6 @@ internal class Program
     /// <param name="args">The arguments (not used).</param>
     private static void Main(string[] args)
     {
-
         WriteLine("OWON XDM1041 Test. (X to Exit)");
 
         while (keyCode == null)

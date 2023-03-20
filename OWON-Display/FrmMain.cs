@@ -30,8 +30,15 @@ namespace OWON_Display
         }
         private void UpdateDisplay()
         {
-            TxtValue.Text = owon.Measurement.Value;
-            TxtMode.Text = owon.Measurement.Mode;
+            if (owon == null)
+            {
+                ResetDisplay();
+            }
+            else
+            {
+                TxtValue.Text = owon.Measurement.Value;
+                TxtMode.Text = owon.Measurement.Mode;
+            }
         }
         private void FrmMain_Load(object sender, EventArgs e)
         {
